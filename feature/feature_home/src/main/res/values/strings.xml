@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="today">Today</string>
+    <string name="days_forecast">Forecast for %1$d days</string>
+    <string name="alerts">Alerts</string>
+</resources>
