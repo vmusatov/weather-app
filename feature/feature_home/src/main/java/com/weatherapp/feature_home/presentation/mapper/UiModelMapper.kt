@@ -1,6 +1,7 @@
 package com.weatherapp.feature_home.presentation.mapper
 
 import android.content.Context
+import com.weatherapp.core_base.utils.DATE_TIME_UI_FORMAT
 import com.weatherapp.core_base.utils.HOUR_AND_MINUTE_FORMAT
 import com.weatherapp.core_base.utils.dayOfWeek
 import com.weatherapp.core_base.utils.format
@@ -8,13 +9,9 @@ import com.weatherapp.core_design_system.util.mapIconCode
 import com.weatherapp.core_design_system.util.mapTempToColor
 import com.weatherapp.feature_home.R
 import com.weatherapp.feature_home.domain.model.*
-import com.weatherapp.feature_home.presentation.model.CurrentWeatherUiModel
-import com.weatherapp.feature_home.presentation.model.DailyWeatherUiModel
-import com.weatherapp.feature_home.presentation.model.HourlyWeatherItem
-import com.weatherapp.feature_home.presentation.model.HourlyWeatherUiModel
+import com.weatherapp.feature_home.presentation.model.*
 import com.weatherapp.feature_settings_api.AppSettings
 import org.threeten.bp.LocalDateTime
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import com.weatherapp.core_design_system.R as CoreR
@@ -93,9 +90,27 @@ class UiModelMapper(private val context: Context) {
         }
 
         return HourlyWeatherUiModel(
-            maxTemp = items.maxBy { it.temp }.temp,
-            minTemp = items.minBy { it.temp }.temp,
+            maxTemp = items.maxByOrNull { it.temp }?.temp ?: 0f,
+            minTemp = items.minByOrNull { it.temp }?.temp ?: 0f,
             items = items,
+        )
+    }
+
+    fun mapAlerts(alerts: List<Alert>): List<AlertUiModel> = alerts.map {
+        AlertUiModel(
+            headline = it.headline,
+            msgType = it.msgType,
+            severity = it.severity,
+            urgency = it.urgency,
+            areas = it.areas,
+            category = it.category,
+            certainty = it.certainty,
+            event = it.event,
+            note = it.note,
+            effective = it.effective?.format(DATE_TIME_UI_FORMAT) ?: "",
+            expires = it.expires?.format(DATE_TIME_UI_FORMAT) ?: "",
+            desc = it.desc,
+            instruction = it.instruction
         )
     }
 }

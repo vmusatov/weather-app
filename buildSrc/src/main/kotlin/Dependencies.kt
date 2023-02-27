@@ -26,6 +26,7 @@ object Dependencies {
         const val navigation = "androidx.navigation:navigation-compose:${Versions.compose_navigation}"
         const val systemUiController =
             "com.google.accompanist:accompanist-systemuicontroller:${Versions.accompanist_systemUiController}"
+        const val accompanistPager = "com.google.accompanist:accompanist-pager:${Versions.accompanistPager}"
     }
 
     object Network {

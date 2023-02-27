@@ -18,7 +18,8 @@ class HomeViewModelMock(
             conditionText = "Sunny",
         ),
         hourlyWeather = getHourlyList(),
-        dailyWeather = emptyList()
+        dailyWeather = emptyList(),
+        alerts = emptyList()
     )
 ) {
     private companion object {

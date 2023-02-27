@@ -7,5 +7,6 @@ data class Forecast(
     val current: CurrentWeather,
     val hourlyForecast: List<HourlyWeather>,
     val dailyForecast: List<DailyWeather>,
+    val alerts: List<Alert>,
     val lastUpdated: String?
 )

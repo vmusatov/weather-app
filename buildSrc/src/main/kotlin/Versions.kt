@@ -4,6 +4,7 @@ object Versions {
     const val compose = "1.3.1"
     const val compose_navigation = "2.4.0-beta02"
 
+    const val accompanistPager = "0.25.1"
     const val accompanist_systemUiController = "0.27.0"
 
     const val gradle = "7.2.2"

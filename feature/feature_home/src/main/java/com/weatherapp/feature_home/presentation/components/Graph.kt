@@ -1,4 +1,4 @@
-package com.weatherapp.core_design_system.component
+package com.weatherapp.feature_home.presentation.components
 
 import android.graphics.PointF
 import androidx.compose.foundation.Canvas

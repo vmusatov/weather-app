@@ -4,17 +4,14 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,16 +21,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.PagerState
 import com.weatherapp.core_design_system.component.*
 import com.weatherapp.core_design_system.screen.AppScreen
 import com.weatherapp.feature_home.R
+import com.weatherapp.feature_home.presentation.components.HourlyGraphItem
 import com.weatherapp.feature_home.presentation.components.HumidityText
-import com.weatherapp.feature_home.presentation.model.CurrentWeatherUiModel
-import com.weatherapp.feature_home.presentation.model.DailyWeatherUiModel
-import com.weatherapp.feature_home.presentation.model.HourlyWeatherItem
-import com.weatherapp.feature_home.presentation.model.HourlyWeatherUiModel
+import com.weatherapp.feature_home.presentation.model.*
 import org.koin.androidx.compose.getViewModel
 import kotlin.math.roundToInt
 
@@ -100,11 +99,13 @@ private fun Content(paddings: PaddingValues, state: HomeState.Content, viewModel
             .fillMaxSize()
             .padding(paddings)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Current(current = state.currentWeather)
         HourlyForecast(hourly = state.hourlyWeather)
-        Alerts()
+        if (state.alerts.isNotEmpty()) {
+            Alerts(state = state)
+        }
         DailyForecast(daily = state.dailyWeather)
         SearchTextField(state, viewModel)
     }
@@ -131,27 +132,32 @@ private fun Current(current: CurrentWeatherUiModel) {
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
+        Column(modifier = Modifier.weight(2f)) {
             Text(
-                modifier = Modifier.padding(bottom = 16.dp),
+                modifier = Modifier.padding(bottom = 32.dp),
                 text = current.temp,
                 style = MaterialTheme.typography.h2
             )
             Text(
                 modifier = Modifier.padding(bottom = 4.dp),
                 text = current.conditionText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.body1
             )
             Text(
-                modifier = Modifier.padding(bottom = 16.dp),
+                modifier = Modifier.padding(bottom = 32.dp),
                 text = current.feelsLikeTemp,
-                style = MaterialTheme.typography.subtitle1
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.subtitle1.copy(color = MaterialTheme.colors.secondaryVariant)
             )
         }
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.weight(1.2f),
             horizontalArrangement = Arrangement.End
         ) {
             Image(
@@ -165,20 +171,33 @@ private fun Current(current: CurrentWeatherUiModel) {
 
 @Composable
 private fun HourlyForecast(hourly: HourlyWeatherUiModel) {
-    AppCard(modifier = Modifier.padding(horizontal = 8.dp)) {
-        LazyRow(modifier = Modifier
-            .padding(horizontal = 8.dp, vertical = 16.dp)
+    val state = rememberLazyListState()
+    LaunchedEffect(hourly) {
+        state.scrollToItem(0)
+    }
+    AppCard(
+        modifier = Modifier
             .fillMaxWidth()
-        ) {
-            items(hourly.items) {
-                HourlyItem(hourly.minTemp, hourly.maxTemp, it)
+            .padding(horizontal = 8.dp),
+        content = {
+            LazyRow(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 16.dp)
+                    .fillMaxWidth(),
+                state = state
+            ) {
+                items(hourly.items) {
+                    HourlyItem(hourly.minTemp, hourly.maxTemp, it)
+                }
             }
         }
-    }
+    )
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
-private fun Alerts() {
+private fun Alerts(state: HomeState.Content) {
+    val pagerState = remember(state) { PagerState() }
     AppCard(
         modifier = Modifier
             .padding(horizontal = 8.dp)
@@ -191,8 +210,68 @@ private fun Alerts() {
                 onClick = { }
             )
         },
-        content = { }
+        content = {
+            AlertsContent(
+                pagerState = pagerState,
+                alerts = state.alerts
+            )
+        }
     )
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+private fun AlertsContent(pagerState: PagerState, alerts: List<AlertUiModel>) {
+    Box(
+        modifier = Modifier.clickable { }
+    ) {
+        Column(
+            modifier = Modifier.padding(bottom = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            HorizontalPager(
+                count = alerts.size,
+                state = pagerState,
+                content = { page ->
+                    AlertItem(
+                        modifier = if(alerts.size > 1)
+                            Modifier.padding(start = 16.dp, end = 16.dp)
+                        else
+                            Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                        alert = alerts[page]
+                    )
+                }
+            )
+            if (alerts.size > 1) {
+                PagerIndicator(
+                    modifier = Modifier.padding(top = 8.dp),
+                    pagerState = pagerState
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlertItem(modifier: Modifier = Modifier, alert: AlertUiModel) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            modifier = Modifier.padding(bottom = 8.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            text = alert.event,
+            style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W600)
+        )
+        Text(
+            text = alert.desc,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.subtitle1.copy(color = MaterialTheme.colors.secondaryVariant)
+        )
+    }
 }
 
 @Composable
@@ -229,13 +308,22 @@ private fun DailyItem(daily: DailyWeatherUiModel) {
     ) {
         Text(
             modifier = Modifier
-                .defaultMinSize(minWidth = 100.dp)
-                .padding(start = 24.dp),
+                .defaultMinSize(minWidth = 110.dp)
+                .padding(start = 16.dp),
             style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W500),
             text = daily.dayText
         )
+
+        Image(
+            modifier = Modifier
+                .padding(end = 0.dp)
+                .padding(vertical = 4.dp)
+                .size(25.dp),
+            painter = painterResource(id = daily.conditionIcon),
+            contentDescription = null
+        )
         TempDiapason(
-            modifier = Modifier.padding(end = 16.dp),
+            modifier = Modifier.padding(end = 8.dp),
             daily = daily
         )
     }
@@ -252,20 +340,10 @@ private fun TempDiapason(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-
-        Image(
-            modifier = Modifier
-                .padding(end = 12.dp)
-                .padding(vertical = 4.dp)
-                .size(25.dp),
-            painter = painterResource(id = daily.conditionIcon),
-            contentDescription = null
-        )
-
         Text(
-            modifier = Modifier.defaultMinSize(minWidth = 30.dp),
+            modifier = Modifier.defaultMinSize(minWidth = 35.dp),
             textAlign = TextAlign.End,
             text = daily.minTempText
         )
@@ -284,7 +362,7 @@ private fun TempDiapason(
         )
 
         Text(
-            modifier = Modifier.defaultMinSize(minWidth = 30.dp),
+            modifier = Modifier.defaultMinSize(minWidth = 35.dp),
             textAlign = TextAlign.Start,
             text = daily.maxTempText
         )

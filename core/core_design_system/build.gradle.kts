@@ -23,6 +23,7 @@ dependencies {
     implementation(Dependencies.Compose.toolingPreview)
     implementation(Dependencies.Compose.material)
     implementation(Dependencies.Compose.systemUiController)
+    implementation(Dependencies.Compose.accompanistPager)
 
     implementation(Dependencies.Di.koinCore)
     implementation(Dependencies.Di.koinAndroid)

@@ -15,11 +15,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.weatherapp.core_design_system.theme.AppTheme
-import com.weatherapp.core_design_system.theme.GrayB3
 
 @Composable
 fun AppCard(
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
     title: String? = null,
     titleContent: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit
@@ -63,7 +62,7 @@ fun CardTitleText(modifier: Modifier = Modifier, text: String) {
         modifier = modifier,
         style = MaterialTheme.typography.body2.copy(fontWeight = FontWeight.W500),
         text = text.uppercase(),
-        color = GrayB3
+        color = MaterialTheme.colors.secondaryVariant
     )
 }
 

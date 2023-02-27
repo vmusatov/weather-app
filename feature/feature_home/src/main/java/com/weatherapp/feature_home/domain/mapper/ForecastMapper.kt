@@ -22,6 +22,10 @@ class ForecastMapper {
             current = forecastDto.current.asDomain(),
             dailyForecast = dailyForecast,
             hourlyForecast = parseDailyToHourlyForecast(location.localtime, dailyForecast),
+            alerts = forecastDto.alerts.alert
+                .distinctBy { it.desc }
+                .filter { !it.desc.isNullOrEmpty() }
+                .map { it.asDomain() },
             lastUpdated = null
         )
     }
@@ -34,16 +38,16 @@ class ForecastMapper {
 
         if (dailyForecast.isNotEmpty()) {
 
-            val nowHourAsInt = if (localTime.hour == 24) localTime.hour else localTime.hour + 1
+            val startHourAsInt = localTime.hour + 1
             val todayHours = dailyForecast.first().hours
 
-            if (todayHours.size > nowHourAsInt) {
-                hours.addAll(todayHours.subList(nowHourAsInt, todayHours.size))
+            if (todayHours.size > startHourAsInt) {
+                hours.addAll(todayHours.subList(startHourAsInt, todayHours.size))
             }
 
-            if (dailyForecast.size > 1 && dailyForecast[1].hours.size > nowHourAsInt) {
+            if (dailyForecast.size > 1 && dailyForecast[1].hours.size >= startHourAsInt) {
                 val tomorrowHours = dailyForecast[1].hours
-                hours.addAll(tomorrowHours.subList(0, nowHourAsInt))
+                hours.addAll(tomorrowHours.subList(0, startHourAsInt))
             }
         }
 

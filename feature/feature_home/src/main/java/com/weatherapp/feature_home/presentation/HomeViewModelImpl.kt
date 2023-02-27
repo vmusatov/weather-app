@@ -66,7 +66,8 @@ class HomeViewModelImpl : HomeViewModel(initialState = HomeState.Loading) {
                 daily = forecast.dailyForecast,
                 localDateTime = forecast.location.localtime,
                 settings = settings
-            )
+            ),
+            alerts = mapper.mapAlerts(forecast.alerts)
         )
     }
 }

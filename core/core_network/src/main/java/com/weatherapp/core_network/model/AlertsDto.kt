@@ -11,7 +11,7 @@ data class AlertItemDto(
     @SerializedName("headline") 
     val headline: String? = null,
     @SerializedName("msgtype") 
-    val msgtype: String? = null,
+    val msgType: String? = null,
     @SerializedName("severity") 
     val severity: String? = null,
     @SerializedName("urgency") 
