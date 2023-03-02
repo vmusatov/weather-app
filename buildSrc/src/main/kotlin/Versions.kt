@@ -21,4 +21,6 @@ object Versions {
     const val koinCompose = "3.4.1"
 
     const val coilCompose = "2.2.2"
+
+    const val collapsingToolbar = "2.3.5"
 }

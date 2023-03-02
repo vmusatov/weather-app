@@ -27,6 +27,8 @@ object Dependencies {
         const val systemUiController =
             "com.google.accompanist:accompanist-systemuicontroller:${Versions.accompanist_systemUiController}"
         const val accompanistPager = "com.google.accompanist:accompanist-pager:${Versions.accompanistPager}"
+
+        const val collapsingToolbar = "me.onebone:toolbar-compose:${Versions.collapsingToolbar}"
     }
 
     object Network {

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowForward
@@ -14,13 +13,10 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,23 +26,32 @@ import com.google.accompanist.pager.PagerState
 import com.weatherapp.core_design_system.component.*
 import com.weatherapp.core_design_system.screen.AppScreen
 import com.weatherapp.feature_home.R
-import com.weatherapp.feature_home.presentation.components.HourlyGraphItem
-import com.weatherapp.feature_home.presentation.components.HumidityText
+import com.weatherapp.feature_home.presentation.components.*
 import com.weatherapp.feature_home.presentation.model.*
+import me.onebone.toolbar.*
 import org.koin.androidx.compose.getViewModel
-import kotlin.math.roundToInt
+
+const val EXPAND_COLLAPSE_DURATION = 400
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = getViewModel()) {
+    val collapsingState = rememberCollapsingToolbarScaffoldState()
+
     AppScreen(
         viewModel = viewModel,
         reactToEvent = ::reactToEvent,
-        topBar = { state -> HomeTopBar(state) },
+        topBar = { state ->
+            HomeTopBar(
+                toolbarState = collapsingState.toolbarState,
+                state = state
+            )
+        },
         content = { paddings, state ->
             when (state) {
                 is HomeState.Loading -> Loading()
                 is HomeState.Content -> Content(
                     paddings = paddings,
+                    collapsingState = collapsingState,
                     state = state,
                     viewModel = viewModel
                 )
@@ -60,7 +65,11 @@ private fun reactToEvent(event: HomeEvent) {
 }
 
 @Composable
-private fun HomeTopBar(state: HomeState) {
+private fun HomeTopBar(
+    toolbarState: CollapsingToolbarState,
+    state: HomeState
+) {
+    val progress = toolbarState.progress
     val title = remember(state) {
         when (state) {
             is HomeState.Content -> state.location
@@ -69,7 +78,12 @@ private fun HomeTopBar(state: HomeState) {
     }
 
     AppTopBar(
-        title = title,
+        title = {
+            LocationText(
+                modifier = Modifier.alpha(1 - progress),
+                text = title,
+            )
+        },
         navigationIcon = Icons.Rounded.Menu,
         onNavIconClick = {},
         contentRight = {
@@ -93,84 +107,133 @@ private fun Loading() {
 }
 
 @Composable
-private fun Content(paddings: PaddingValues, state: HomeState.Content, viewModel: HomeViewModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddings)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Current(current = state.currentWeather)
-        HourlyForecast(hourly = state.hourlyWeather)
-        if (state.alerts.isNotEmpty()) {
-            Alerts(state = state)
+private fun Content(
+    collapsingState: CollapsingToolbarScaffoldState,
+    paddings: PaddingValues,
+    state: HomeState.Content,
+    viewModel: HomeViewModel
+) {
+    val scrollState = rememberScrollState()
+
+    CollapsingToolbarScaffold(
+        modifier = Modifier.fillMaxSize().padding(paddings),
+        scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+        state = collapsingState,
+        toolbar = {
+            CollapsedContent(
+                toolbarState = collapsingState.toolbarState,
+                scrollState = scrollState,
+                state = state
+            )
+        },
+        body = {
+            Column(
+                modifier = Modifier.verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                HourlyCard(hourly = state.hourlyWeather)
+                if (state.alerts.isNotEmpty()) {
+                    AlertsCard(state = state)
+                }
+                DailyCard(daily = state.dailyWeather)
+                SearchTextField(state, viewModel)
+            }
         }
-        DailyForecast(daily = state.dailyWeather)
-        SearchTextField(state, viewModel)
-    }
+    )
 }
 
+@OptIn(ExperimentalToolbarApi::class)
 @Composable
-private fun SearchTextField(state: HomeState.Content, viewModel: HomeViewModel) {
-    val value = remember(state) { mutableStateOf(state.location) }
-    Row(modifier = Modifier.padding(top = 90.dp)) {
-        TextField(
-            value = value.value,
-            onValueChange = { value.value = it }
-        )
-        Button(
-            onClick = { viewModel.updateForecast(value.value) },
-            content = { Text(text = "find") }
-        )
-    }
-}
+private fun CollapsingToolbarScope.CollapsedContent(
+    toolbarState: CollapsingToolbarState,
+    scrollState: ScrollState,
+    state: HomeState.Content
+) {
+    val isScrollInProgress = scrollState.isScrollInProgress
+    val progress = toolbarState.progress
 
-@Composable
-private fun Current(current: CurrentWeatherUiModel) {
-    Row(
+    LaunchedEffect(isScrollInProgress) {
+        if (!isScrollInProgress && progress != 0.0f && progress != 1.0f) {
+            if (progress <= 0.5) {
+                toolbarState.collapse(EXPAND_COLLAPSE_DURATION)
+            }
+            if (progress > 0.5) {
+                toolbarState.expand(EXPAND_COLLAPSE_DURATION)
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier)
+    CurrentWeather(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
+            .alpha(toolbarState.progress)
+            .parallax(ratio = 0.1f)
+            .padding(
+                start = (16 + progress * 10f).dp,
+                end = (16 + progress * 10f).dp,
+                bottom = 32.dp
+            )
             .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(modifier = Modifier.weight(2f)) {
-            Text(
-                modifier = Modifier.padding(bottom = 32.dp),
-                text = current.temp,
-                style = MaterialTheme.typography.h2
-            )
-            Text(
-                modifier = Modifier.padding(bottom = 4.dp),
-                text = current.conditionText,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.body1
-            )
-            Text(
-                modifier = Modifier.padding(bottom = 32.dp),
-                text = current.feelsLikeTemp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.subtitle1.copy(color = MaterialTheme.colors.secondaryVariant)
-            )
-        }
+        location = state.location,
+        state = state
+    )
+}
+
+@Composable
+private fun CurrentWeather(
+    modifier: Modifier,
+    location: String,
+    state: HomeState.Content
+) {
+    val current = state.currentWeather
+    val today = state.dailyWeather.firstOrNull()
+
+    Column(modifier = modifier) {
         Row(
-            modifier = Modifier.weight(1.2f),
-            horizontalArrangement = Arrangement.End
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            Column {
+                Text(
+                    text = current.temp,
+                    style = MaterialTheme.typography.h2
+                )
+
+                Text(
+                    modifier = Modifier.padding(top = 16.dp),
+                    text = if (today != null) "${today.minTempText} / ${today.maxTempText}" else "",
+                    style = MaterialTheme.typography.subtitle1.copy(
+                        fontWeight = FontWeight.W600
+                    )
+                )
+
+                Text(
+                    text = current.feelsLikeTemp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.subtitle1.copy(
+                        fontWeight = FontWeight.W600
+                    )
+                )
+            }
             Image(
                 modifier = Modifier.size(120.dp),
                 painter = painterResource(id = current.conditionIcon),
                 contentDescription = null
             )
         }
+
+        LocationText(
+            modifier = Modifier.padding(top = 24.dp),
+            text = location,
+            style = MaterialTheme.typography.h5.copy(fontWeight = FontWeight.W500)
+        )
     }
 }
 
 @Composable
-private fun HourlyForecast(hourly: HourlyWeatherUiModel) {
+private fun HourlyCard(hourly: HourlyWeatherUiModel) {
     val state = rememberLazyListState()
     LaunchedEffect(hourly) {
         state.scrollToItem(0)
@@ -196,7 +259,7 @@ private fun HourlyForecast(hourly: HourlyWeatherUiModel) {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-private fun Alerts(state: HomeState.Content) {
+private fun AlertsCard(state: HomeState.Content) {
     val pagerState = remember(state) { PagerState() }
     AppCard(
         modifier = Modifier
@@ -235,7 +298,7 @@ private fun AlertsContent(pagerState: PagerState, alerts: List<AlertUiModel>) {
                 content = { page ->
                     AlertItem(
                         modifier = if(alerts.size > 1)
-                            Modifier.padding(start = 16.dp, end = 16.dp)
+                            Modifier.padding(horizontal = 16.dp)
                         else
                             Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                         alert = alerts[page]
@@ -253,29 +316,7 @@ private fun AlertsContent(pagerState: PagerState, alerts: List<AlertUiModel>) {
 }
 
 @Composable
-private fun AlertItem(modifier: Modifier = Modifier, alert: AlertUiModel) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            modifier = Modifier.padding(bottom = 8.dp),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            text = alert.event,
-            style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W600)
-        )
-        Text(
-            text = alert.desc,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.subtitle1.copy(color = MaterialTheme.colors.secondaryVariant)
-        )
-    }
-}
-
-@Composable
-private fun DailyForecast(daily: List<DailyWeatherUiModel>) {
+private fun DailyCard(daily: List<DailyWeatherUiModel>) {
     val context = LocalContext.current
     AppCard(
         modifier = Modifier
@@ -298,113 +339,16 @@ private fun DailyForecast(daily: List<DailyWeatherUiModel>) {
 }
 
 @Composable
-private fun DailyItem(daily: DailyWeatherUiModel) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = { }),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            modifier = Modifier
-                .defaultMinSize(minWidth = 110.dp)
-                .padding(start = 16.dp),
-            style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W500),
-            text = daily.dayText
+private fun SearchTextField(state: HomeState.Content, viewModel: HomeViewModel) {
+    val value = remember(state) { mutableStateOf(state.location) }
+    Row(modifier = Modifier.padding(top = 150.dp)) {
+        TextField(
+            value = value.value,
+            onValueChange = { value.value = it }
         )
-
-        Image(
-            modifier = Modifier
-                .padding(end = 0.dp)
-                .padding(vertical = 4.dp)
-                .size(25.dp),
-            painter = painterResource(id = daily.conditionIcon),
-            contentDescription = null
-        )
-        TempDiapason(
-            modifier = Modifier.padding(end = 8.dp),
-            daily = daily
-        )
-    }
-}
-
-@Composable
-private fun TempDiapason(
-    modifier: Modifier = Modifier,
-    daily: DailyWeatherUiModel
-) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp
-
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            modifier = Modifier.defaultMinSize(minWidth = 35.dp),
-            textAlign = TextAlign.End,
-            text = daily.minTempText
-        )
-
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .height(10.dp)
-                .width((screenWidth / 4.5).dp)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(daily.minTempColor, daily.maxTempColor,)
-                    )
-                )
-        )
-
-        Text(
-            modifier = Modifier.defaultMinSize(minWidth = 35.dp),
-            textAlign = TextAlign.Start,
-            text = daily.maxTempText
-        )
-    }
-}
-
-@Composable
-private fun HourlyItem(min: Float, max: Float, item: HourlyWeatherItem) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = item.time,
-            style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.W500)
-        )
-
-        Image(
-            modifier = Modifier
-                .padding(vertical = 4.dp)
-                .size(25.dp),
-            painter = painterResource(id = item.conditionIcon),
-            contentDescription = null
-        )
-
-        Text(
-            modifier = Modifier.padding(bottom = 4.dp),
-            text = item.tempText,
-            style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W500)
-        )
-
-        HourlyGraphItem(
-            modifier = Modifier
-                .height(70.dp)
-                .width(45.dp),
-            valuesRange = min.roundToInt()..max.roundToInt(),
-            startValue = item.startTemp,
-            value = item.temp,
-            endValue = item.endTemp,
-            fillColor = item.color
-        )
-
-        HumidityText(
-            modifier = Modifier.padding(top = 4.dp),
-            value = item.humidity
+        Button(
+            onClick = { viewModel.updateForecast(value.value) },
+            content = { Text(text = "find") }
         )
     }
 }
@@ -416,11 +360,17 @@ private fun HomeScreenPreview() {
     AppScreen(
         viewModel = viewModel,
         reactToEvent = { },
-        topBar = { state -> HomeTopBar(state) },
+        topBar = { state ->
+            HomeTopBar(
+                state = state,
+                toolbarState = CollapsingToolbarState()
+            )
+        },
         content = { paddings, state ->
             when (state) {
                 is HomeState.Content -> Content(
                     paddings = paddings,
+                    collapsingState = rememberCollapsingToolbarScaffoldState(),
                     state = state,
                     viewModel = viewModel
                 )
@@ -436,7 +386,12 @@ private fun HomeScreenLoadingPreview() {
     AppScreen(
         viewModel = HomeViewModelMock(isLoading = true),
         reactToEvent = { },
-        topBar = { state -> HomeTopBar(state) },
+        topBar = { state ->
+            HomeTopBar(
+                state = state,
+                toolbarState = CollapsingToolbarState()
+            )
+        },
         content = { _, state ->
             when (state) {
                 is HomeState.Loading -> Loading()

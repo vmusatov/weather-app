@@ -1,34 +1,160 @@
 package com.weatherapp.feature_home.presentation.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.weatherapp.core_design_system.R
+import com.weatherapp.feature_home.presentation.model.AlertUiModel
+import com.weatherapp.feature_home.presentation.model.DailyWeatherUiModel
+import com.weatherapp.feature_home.presentation.model.HourlyWeatherItem
+import kotlin.math.roundToInt
 
 @Composable
-fun HumidityText(modifier: Modifier = Modifier, value: String) {
+fun TempDiapason(
+    modifier: Modifier = Modifier,
+    daily: DailyWeatherUiModel
+) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+
     Row(
         modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Image(
+        Text(
+            modifier = Modifier.defaultMinSize(minWidth = 35.dp),
+            textAlign = TextAlign.End,
+            text = daily.minTempText
+        )
+
+        Box(
             modifier = Modifier
-                .size(13.dp)
-                .padding(top = 2.dp),
-            painter = painterResource(id = R.drawable.ic_humidity),
-            contentDescription = null
+                .padding(horizontal = 8.dp)
+                .height(10.dp)
+                .width((screenWidth / 4.5).dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(daily.minTempColor, daily.maxTempColor,)
+                    )
+                )
+        )
+
+        Text(
+            modifier = Modifier.defaultMinSize(minWidth = 35.dp),
+            textAlign = TextAlign.Start,
+            text = daily.maxTempText
+        )
+    }
+}
+
+@Composable
+fun AlertItem(modifier: Modifier = Modifier, alert: AlertUiModel) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            modifier = Modifier.padding(bottom = 8.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            text = alert.event,
+            style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W600)
         )
         Text(
-            text = value,
-            style = MaterialTheme.typography.caption
+            text = alert.desc,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.subtitle1.copy(color = MaterialTheme.colors.secondaryVariant)
+        )
+    }
+}
+
+@Composable
+fun DailyItem(daily: DailyWeatherUiModel) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = { }),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            modifier = Modifier
+                .defaultMinSize(minWidth = 110.dp)
+                .padding(start = 16.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W500),
+            text = daily.dayText
+        )
+
+        Image(
+            modifier = Modifier
+                .padding(end = 0.dp)
+                .padding(vertical = 4.dp)
+                .size(25.dp),
+            painter = painterResource(id = daily.conditionIcon),
+            contentDescription = null
+        )
+        TempDiapason(
+            modifier = Modifier.padding(end = 8.dp),
+            daily = daily
+        )
+    }
+}
+
+@Composable
+fun HourlyItem(min: Float, max: Float, item: HourlyWeatherItem) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = item.time,
+            style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.W500)
+        )
+
+        Image(
+            modifier = Modifier
+                .padding(vertical = 4.dp)
+                .size(25.dp),
+            painter = painterResource(id = item.conditionIcon),
+            contentDescription = null
+        )
+
+        Text(
+            modifier = Modifier.padding(bottom = 4.dp),
+            text = item.tempText,
+            style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W500)
+        )
+
+        HourlyGraphItem(
+            modifier = Modifier
+                .height(70.dp)
+                .width(45.dp),
+            valuesRange = min.roundToInt()..max.roundToInt(),
+            startValue = item.startTemp,
+            value = item.temp,
+            endValue = item.endTemp,
+            fillColor = item.color
+        )
+
+        HumidityText(
+            modifier = Modifier.padding(top = 4.dp),
+            value = item.humidity
         )
     }
 }

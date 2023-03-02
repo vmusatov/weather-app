@@ -27,6 +27,7 @@ dependencies {
     implementation(Dependencies.Compose.toolingPreview)
     implementation(Dependencies.Compose.material)
     implementation(Dependencies.Compose.accompanistPager)
+    implementation(Dependencies.Compose.collapsingToolbar)
 
     implementation(Dependencies.Network.retrofit)
     implementation(Dependencies.Network.converterJson)

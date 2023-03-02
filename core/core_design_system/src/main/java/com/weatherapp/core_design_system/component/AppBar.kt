@@ -16,14 +16,14 @@ import com.weatherapp.core_design_system.theme.AppTheme
 
 @Composable
 fun AppTopBar(
-    title: String,
+    title: @Composable () -> Unit,
     navigationIcon: ImageVector? = Icons.Rounded.ArrowBack,
     onNavIconClick: (() -> Unit) = {},
     elevation: Dp = 0.dp,
     contentRight: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
-        title = { Text(text = title) },
+        title = title,
         navigationIcon = navigationIcon?.let {
             {
                 AppIconButton(icon = it, onClick = onNavIconClick)
@@ -40,7 +40,7 @@ fun AppTopBar(
 private fun AppBarPreview() {
     AppTheme {
         AppTopBar(
-            title = "AppBar",
+            title = { Text(text = "AppBar") },
             contentRight = {
                 AppIconButton(
                     icon = Icons.Rounded.Settings,
