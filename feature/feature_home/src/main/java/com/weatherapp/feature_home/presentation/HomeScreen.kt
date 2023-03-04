@@ -31,7 +31,7 @@ import com.weatherapp.feature_home.presentation.model.*
 import me.onebone.toolbar.*
 import org.koin.androidx.compose.getViewModel
 
-const val EXPAND_COLLAPSE_DURATION = 400
+const val EXPAND_COLLAPSE_DURATION = 300
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = getViewModel()) {
@@ -150,10 +150,14 @@ private fun CollapsingToolbarScope.CollapsedContent(
     state: HomeState.Content
 ) {
     val isScrollInProgress = scrollState.isScrollInProgress
+    val isToolbarScrollInProgress = toolbarState.isScrollInProgress
     val progress = toolbarState.progress
 
-    LaunchedEffect(isScrollInProgress) {
-        if (!isScrollInProgress && progress != 0.0f && progress != 1.0f) {
+    LaunchedEffect(key1 = isScrollInProgress, key2 = isToolbarScrollInProgress) {
+        if (
+            !isToolbarScrollInProgress && !isScrollInProgress &&
+            progress != 0.0f && progress != 1.0f
+        ) {
             if (progress <= 0.5) {
                 toolbarState.collapse(EXPAND_COLLAPSE_DURATION)
             }
