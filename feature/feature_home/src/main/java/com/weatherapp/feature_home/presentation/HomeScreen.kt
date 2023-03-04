@@ -149,13 +149,11 @@ private fun CollapsingToolbarScope.CollapsedContent(
     scrollState: ScrollState,
     state: HomeState.Content
 ) {
-    val isScrollInProgress = scrollState.isScrollInProgress
-    val isToolbarScrollInProgress = toolbarState.isScrollInProgress
     val progress = toolbarState.progress
 
-    LaunchedEffect(key1 = isScrollInProgress, key2 = isToolbarScrollInProgress) {
+    LaunchedEffect(key1 = scrollState.isScrollInProgress, key2 = toolbarState.isScrollInProgress) {
         if (
-            !isToolbarScrollInProgress && !isScrollInProgress &&
+            !toolbarState.isScrollInProgress && !scrollState.isScrollInProgress &&
             progress != 0.0f && progress != 1.0f
         ) {
             if (progress <= 0.5) {
