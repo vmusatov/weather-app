@@ -202,7 +202,7 @@ private fun CurrentWeather(
 
                 Text(
                     modifier = Modifier.padding(top = 16.dp),
-                    text = if (today != null) "${today.minTempText} / ${today.maxTempText}" else "",
+                    text = if (today != null) "${today.maxTempText} / ${today.minTempText}" else "",
                     style = MaterialTheme.typography.subtitle1.copy(
                         fontWeight = FontWeight.W600
                     )

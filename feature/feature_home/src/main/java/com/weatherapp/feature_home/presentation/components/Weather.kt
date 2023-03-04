@@ -39,7 +39,7 @@ fun TempDiapason(
         Text(
             modifier = Modifier.defaultMinSize(minWidth = 35.dp),
             textAlign = TextAlign.End,
-            text = daily.minTempText
+            text = daily.maxTempText
         )
 
         Box(
@@ -50,7 +50,7 @@ fun TempDiapason(
                 .clip(CircleShape)
                 .background(
                     brush = Brush.horizontalGradient(
-                        colors = listOf(daily.minTempColor, daily.maxTempColor,)
+                        colors = listOf(daily.maxTempColor, daily.minTempColor)
                     )
                 )
         )
@@ -58,7 +58,7 @@ fun TempDiapason(
         Text(
             modifier = Modifier.defaultMinSize(minWidth = 35.dp),
             textAlign = TextAlign.Start,
-            text = daily.maxTempText
+            text = daily.minTempText
         )
     }
 }
