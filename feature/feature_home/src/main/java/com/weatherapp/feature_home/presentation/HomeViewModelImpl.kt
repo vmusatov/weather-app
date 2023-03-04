@@ -25,6 +25,8 @@ class HomeViewModelImpl : HomeViewModel(initialState = HomeState.Loading) {
     }
 
     override fun updateForecast(request: String) {
+        updateState { HomeState.Loading }
+
         viewModelScope.launch {
             val settings = settingsRepository.getSettings()
 

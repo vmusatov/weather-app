@@ -7,6 +7,7 @@ import com.weatherapp.feature_home.domain.model.HourlyWeather
 import com.weatherapp.feature_home.domain.model.asDomain
 import com.weatherapp.feature_locations.asDomain
 import org.threeten.bp.LocalDateTime
+import kotlin.math.min
 
 class ForecastMapper {
 
@@ -15,7 +16,10 @@ class ForecastMapper {
         val dailyForecast = forecastDto
             .forecast
             .forecastDays
-            .map { it.asDomain(forecastDto.location.timeZoneId) }
+            .map {
+                val domain = it.asDomain(forecastDto.location.timeZoneId)
+                domain.copy(hours = normalizeHourlyWeather(domain.hours))
+            }
 
         return Forecast(
             location = location,
@@ -23,7 +27,7 @@ class ForecastMapper {
             dailyForecast = dailyForecast,
             hourlyForecast = parseDailyToHourlyForecast(location.localtime, dailyForecast),
             alerts = forecastDto.alerts.alert
-                .distinctBy { it.desc }
+                .distinctBy { it.desc?.lowercase() }
                 .filter { !it.desc.isNullOrEmpty() }
                 .map { it.asDomain() },
             lastUpdated = null
@@ -52,5 +56,27 @@ class ForecastMapper {
         }
 
         return hours
+    }
+
+    private fun normalizeHourlyWeather(hourly: List<HourlyWeather>): List<HourlyWeather> {
+        val normalized = hourly.toMutableList()
+
+        for (index in 1 until normalized.size - 1) {
+            val current = normalized[index]
+            val prev = normalized[index - 1]
+            val next = normalized[index + 1]
+
+            if (
+                (current.tempF < prev.tempF && current.tempF < next.tempF) ||
+                (current.tempC < prev.tempC && current.tempC < next.tempC)
+            ) {
+                normalized[index] = normalized[index].copy(
+                    tempC = min(prev.tempC, next.tempC),
+                    tempF = min(prev.tempF, next.tempF)
+                )
+            }
+        }
+
+        return normalized
     }
 }

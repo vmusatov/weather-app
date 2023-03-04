@@ -143,6 +143,7 @@ fun HourlyItem(min: Float, max: Float, item: HourlyWeatherItem) {
 
         HourlyGraphItem(
             modifier = Modifier
+                .padding(top = 4.dp)
                 .height(70.dp)
                 .width(45.dp),
             valuesRange = min.roundToInt()..max.roundToInt(),

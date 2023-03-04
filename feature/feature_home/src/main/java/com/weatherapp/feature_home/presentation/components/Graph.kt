@@ -4,7 +4,6 @@ import android.graphics.PointF
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -13,11 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.weatherapp.core_design_system.theme.LightGray2
 import kotlin.math.roundToInt
 
-private const val Y_OFFSET = 50
 private const val STROKE_WIDTH = 5f
 private const val DIVIDER_WIDTH = 3f
 
@@ -36,12 +35,14 @@ fun HourlyGraphItem(
     backgroundColor: Color = MaterialTheme.colors.onPrimary,
     strokeColor: Color = LightGray2
 ) {
+    val yOffset = with(LocalDensity.current) { 20.dp.toPx() }
+
     val controlPoints1 = remember(value) { mutableListOf<PointF>() }
     val controlPoints2 = remember(value) { mutableListOf<PointF>() }
     val coordinates = remember(value) { mutableListOf<PointF>() }
 
     Box(
-        modifier = modifier.padding(top = 4.dp),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -53,18 +54,21 @@ fun HourlyGraphItem(
                 xPosition = PointPosition.START,
                 value = startValue ?: value,
                 valuesRange = valuesRange,
+                yOffset = yOffset,
                 coordinates = coordinates
             )
             calculateCoordinates(
                 xPosition = PointPosition.MIDDLE,
                 value = value,
                 valuesRange = valuesRange,
+                yOffset = yOffset,
                 coordinates = coordinates
             )
             calculateCoordinates(
                 xPosition = PointPosition.END,
                 value = endValue ?: value,
                 valuesRange = valuesRange,
+                yOffset = yOffset,
                 coordinates = coordinates
             )
 
@@ -123,6 +127,7 @@ private fun DrawScope.calculateCoordinates(
     xPosition: PointPosition,
     value: Float?,
     valuesRange: IntRange,
+    yOffset: Float,
     coordinates: MutableList<PointF>
 ) {
     if (value == null) return
@@ -135,9 +140,9 @@ private fun DrawScope.calculateCoordinates(
     val yValue = convertRange(
         number = value.roundToInt(),
         original = valuesRange,
-        target = Y_OFFSET..size.height.roundToInt(),
+        target = yOffset.roundToInt()..size.height.roundToInt(),
         height = size.height.roundToInt()
-    ).toFloat() - Y_OFFSET
+    ).toFloat() - yOffset
 
     coordinates.add(PointF(xValue, yValue))
 }

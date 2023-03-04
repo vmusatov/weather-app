@@ -47,12 +47,6 @@ class UiModelMapper(private val context: Context) {
                 item.date.dayOfWeek()
             }
 
-            val commonDayCondition = item.hours
-                .subList(min(item.hours.size - 1, 6), min(item.hours.size - 1, 24))
-                .groupBy { it.conditionIconCode }
-                .maxBy { it.value.size }
-                .key
-
             DailyWeatherUiModel(
                 date = item.date,
                 dayText = dayText,
@@ -64,10 +58,34 @@ class UiModelMapper(private val context: Context) {
                 minTemp = minTemp,
                 minTempColor = mapTempToColor(item.minTempC.toFloat()),
                 minTempText = context.getString(CoreR.string.degree, minTemp),
-                conditionIcon = mapIconCode(commonDayCondition, true),
+                conditionIcon = mapIconCode(getCommonDayCondition(item.hours), true),
                 hours = mapHourlyForecast(item.hours, settings)
             )
         }
+    }
+
+    private fun getCommonDayCondition(hours: List<HourlyWeather>): Int {
+        val countMap = mutableMapOf<Int, Int>()
+        var maxCount = 0
+        var maxCondition = 0
+
+        for (hour in hours) {
+            val hourIndex = hours.indexOf(hour)
+            if (hourIndex in 8..21) {
+                continue
+            }
+
+            val condition = hour.conditionIconCode
+            val count = (countMap[condition] ?: 0) + if (hour.isHavePrecipitation()) 3 else 1
+            countMap[condition] = count
+
+            if (count > maxCount) {
+                maxCount = count
+                maxCondition = condition
+            }
+        }
+
+        return maxCondition
     }
 
     fun mapHourlyForecast(
@@ -77,11 +95,14 @@ class UiModelMapper(private val context: Context) {
 
         val items = hourly.mapIndexed { index, item ->
             val curTemp = item.temp(settings)
+            val prev = hourly.getOrNull(index - 1)?.temp(settings)
+            val next = hourly.getOrNull(index + 1)?.temp(settings)
+
             HourlyWeatherItem(
                 time = item.dateTime.format(HOUR_AND_MINUTE_FORMAT),
                 temp = curTemp,
-                startTemp = if (index == 0) null else hourly[index - 1].temp(settings),
-                endTemp = if (index == hourly.size - 1) null else curTemp,
+                startTemp = getStartTemp(curTemp, prev),
+                endTemp = getEndTemp(curTemp, next),
                 tempText = context.getString(CoreR.string.degree, curTemp.roundToInt()),
                 conditionIcon = mapIconCode(item.conditionIconCode, item.isDayIcon),
                 humidity = "${item.humidity}%",
@@ -94,6 +115,14 @@ class UiModelMapper(private val context: Context) {
             minTemp = items.minByOrNull { it.temp }?.temp ?: 0f,
             items = items,
         )
+    }
+
+    private fun getStartTemp(curTemp: Float, prevTemp: Float?): Float? {
+        return if (prevTemp != null && prevTemp <= curTemp) curTemp else prevTemp
+    }
+
+    private fun getEndTemp(curTemp: Float, nextTemp: Float?): Float? {
+        return if (nextTemp != null && nextTemp > curTemp) nextTemp else curTemp
     }
 
     fun mapAlerts(alerts: List<Alert>): List<AlertUiModel> = alerts.map {
