@@ -10,6 +10,7 @@ data class DailyWeather(
     val humidity: Int,
     val maxTempC: Int,
     val minTempC: Int,
+    val dayCondition: Int,
     val hours: List<HourlyWeather>
 )
 
@@ -18,5 +19,6 @@ internal fun ForecastDayDto.asDomain(timeZoneId: String) = DailyWeather(
     humidity = day.humidity,
     maxTempC = day.maxTempC.roundToInt(),
     minTempC = day.minTempC.roundToInt(),
+    dayCondition = day.condition.code,
     hours = hours.map { it.asDomain(timeZoneId) }
 )

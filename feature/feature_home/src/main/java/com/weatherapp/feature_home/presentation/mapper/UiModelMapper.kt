@@ -8,7 +8,10 @@ import com.weatherapp.core_base.utils.format
 import com.weatherapp.core_design_system.util.mapIconCode
 import com.weatherapp.core_design_system.util.mapTempToColor
 import com.weatherapp.feature_home.R
-import com.weatherapp.feature_home.domain.model.*
+import com.weatherapp.feature_home.domain.model.Alert
+import com.weatherapp.feature_home.domain.model.CurrentWeather
+import com.weatherapp.feature_home.domain.model.DailyWeather
+import com.weatherapp.feature_home.domain.model.HourlyWeather
 import com.weatherapp.feature_home.formatters.*
 import com.weatherapp.feature_home.presentation.model.*
 import com.weatherapp.feature_settings_api.AppSettings
@@ -55,34 +58,10 @@ class UiModelMapper(private val context: Context) {
                 minTemp = formatTemp(item.minTempC, settings.tempUnit),
                 minTempColor = mapTempToColor(item.minTempC),
                 minTempText = formatTempString(context, item.minTempC, settings.tempUnit),
-                conditionIcon = mapIconCode(getCommonDayCondition(item.hours), true),
+                conditionIcon = mapIconCode(item.dayCondition, true),
                 hours = mapHourlyForecast(item.hours, settings)
             )
         }
-    }
-
-    private fun getCommonDayCondition(hours: List<HourlyWeather>): Int {
-        val countMap = mutableMapOf<Int, Int>()
-        var maxCount = 0
-        var maxCondition = 0
-
-        for (hour in hours) {
-            val hourIndex = hours.indexOf(hour)
-            if (hourIndex !in 8..21) {
-                continue
-            }
-
-            val condition = hour.conditionIconCode
-            val count = (countMap[condition] ?: 0) + if (hour.isHavePrecipitation()) 3 else 1
-            countMap[condition] = count
-
-            if (count > maxCount) {
-                maxCount = count
-                maxCondition = condition
-            }
-        }
-
-        return maxCondition
     }
 
     fun mapHourlyForecast(
