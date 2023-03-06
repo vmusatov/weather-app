@@ -21,15 +21,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.weatherapp.core_design_system.component.*
 import com.weatherapp.core_design_system.screen.AppScreen
+import com.weatherapp.core_design_system.theme.GrayB3
 import com.weatherapp.feature_home.R
 import com.weatherapp.feature_home.presentation.components.*
 import com.weatherapp.feature_home.presentation.model.*
 import me.onebone.toolbar.*
 import org.koin.androidx.compose.getViewModel
+import com.weatherapp.core_design_system.R as CoreR
 
 const val EXPAND_COLLAPSE_DURATION = 300
 
@@ -116,7 +117,9 @@ private fun Content(
     val scrollState = rememberScrollState()
 
     CollapsingToolbarScaffold(
-        modifier = Modifier.fillMaxSize().padding(paddings),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddings),
         scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
         state = collapsingState,
         toolbar = {
@@ -136,6 +139,7 @@ private fun Content(
                     AlertsCard(state = state)
                 }
                 DailyCard(daily = state.dailyWeather)
+                AdditionalCard(current = state.currentWeather)
                 SearchTextField(state, viewModel)
             }
         }
@@ -151,15 +155,17 @@ private fun CollapsingToolbarScope.CollapsedContent(
 ) {
     val progress = toolbarState.progress
 
-    LaunchedEffect(key1 = scrollState.isScrollInProgress, key2 = toolbarState.isScrollInProgress) {
+    LaunchedEffect(
+        key1 = scrollState.isScrollInProgress,
+        key2 = toolbarState.isScrollInProgress
+    ) {
         if (
             !toolbarState.isScrollInProgress && !scrollState.isScrollInProgress &&
             progress != 0.0f && progress != 1.0f
         ) {
             if (progress <= 0.5) {
                 toolbarState.collapse(EXPAND_COLLAPSE_DURATION)
-            }
-            if (progress > 0.5) {
+            } else {
                 toolbarState.expand(EXPAND_COLLAPSE_DURATION)
             }
         }
@@ -284,39 +290,6 @@ private fun AlertsCard(state: HomeState.Content) {
     )
 }
 
-@OptIn(ExperimentalPagerApi::class)
-@Composable
-private fun AlertsContent(pagerState: PagerState, alerts: List<AlertUiModel>) {
-    Box(
-        modifier = Modifier.clickable { }
-    ) {
-        Column(
-            modifier = Modifier.padding(bottom = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            HorizontalPager(
-                count = alerts.size,
-                state = pagerState,
-                content = { page ->
-                    AlertItem(
-                        modifier = if(alerts.size > 1)
-                            Modifier.padding(horizontal = 16.dp)
-                        else
-                            Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                        alert = alerts[page]
-                    )
-                }
-            )
-            if (alerts.size > 1) {
-                PagerIndicator(
-                    modifier = Modifier.padding(top = 8.dp),
-                    pagerState = pagerState
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun DailyCard(daily: List<DailyWeatherUiModel>) {
     val context = LocalContext.current
@@ -339,6 +312,56 @@ private fun DailyCard(daily: List<DailyWeatherUiModel>) {
         }
     )
 }
+
+@Composable
+private fun AdditionalCard(current: CurrentWeatherUiModel) {
+    val context = LocalContext.current
+    AppCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        title = context.getString(CoreR.string.additional),
+        content = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp, end = 8.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                AdditionalWeatherItem(
+                    icon = CoreR.drawable.ic_uv_index,
+                    name = context.getString(CoreR.string.uv_index),
+                    value = current.uvIndex
+                )
+
+                Spacer(modifier = Modifier
+                    .height(95.dp)
+                    .width(0.5.dp)
+                    .background(GrayB3)
+                )
+
+                AdditionalWeatherItem(
+                    icon = CoreR.drawable.ic_wind,
+                    name = context.getString(CoreR.string.wind),
+                    value = current.wind
+                )
+
+                Box(modifier = Modifier
+                    .height(95.dp)
+                    .width(0.5.dp)
+                    .background(GrayB3)
+                )
+
+                AdditionalWeatherItem(
+                    icon = CoreR.drawable.ic_pressure,
+                    name = context.getString(CoreR.string.pressure),
+                    value = current.pressure
+                )
+            }
+        }
+    )
+}
+
 
 @Composable
 private fun SearchTextField(state: HomeState.Content, viewModel: HomeViewModel) {

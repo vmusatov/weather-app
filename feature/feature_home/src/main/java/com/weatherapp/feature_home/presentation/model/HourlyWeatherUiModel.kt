@@ -6,16 +6,16 @@ import com.weatherapp.core_design_system.theme.GrayB3
 import com.weatherapp.core_design_system.R as CoreR
 
 data class HourlyWeatherUiModel(
-    val maxTemp: Float,
-    val minTemp: Float,
+    val maxTemp: Int,
+    val minTemp: Int,
     val items: List<HourlyWeatherItem>
 )
 
 data class HourlyWeatherItem(
     val time: String,
-    val temp: Float,
-    val startTemp: Float?,
-    val endTemp: Float?,
+    val temp: Int,
+    val startTemp: Int?,
+    val endTemp: Int?,
     val tempText: String,
     @DrawableRes
     var conditionIcon: Int,
@@ -25,9 +25,9 @@ data class HourlyWeatherItem(
     companion object {
         fun empty(): HourlyWeatherItem = HourlyWeatherItem(
             time = "00:00",
-            temp = 0f,
-            startTemp = 0f,
-            endTemp = 0f,
+            temp = 0,
+            startTemp = 0,
+            endTemp = 0,
             tempText = "",
             humidity = "0%",
             color = GrayB3,

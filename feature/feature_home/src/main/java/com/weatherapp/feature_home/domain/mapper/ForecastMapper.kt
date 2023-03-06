@@ -66,13 +66,9 @@ class ForecastMapper {
             val prev = normalized[index - 1]
             val next = normalized[index + 1]
 
-            if (
-                (current.tempF < prev.tempF && current.tempF < next.tempF) ||
-                (current.tempC < prev.tempC && current.tempC < next.tempC)
-            ) {
+            if (current.tempC < prev.tempC && current.tempC < next.tempC) {
                 normalized[index] = normalized[index].copy(
-                    tempC = min(prev.tempC, next.tempC),
-                    tempF = min(prev.tempF, next.tempF)
+                    tempC = min(prev.tempC, next.tempC)
                 )
             }
         }

@@ -28,9 +28,9 @@ private enum class PointPosition {
 fun HourlyGraphItem(
     modifier : Modifier,
     valuesRange: IntRange,
-    startValue: Float?,
-    value: Float,
-    endValue: Float?,
+    startValue: Int?,
+    value: Int,
+    endValue: Int?,
     fillColor: Color,
     backgroundColor: Color = MaterialTheme.colors.onPrimary,
     strokeColor: Color = LightGray2
@@ -125,7 +125,7 @@ fun HourlyGraphItem(
 
 private fun DrawScope.calculateCoordinates(
     xPosition: PointPosition,
-    value: Float?,
+    value: Int?,
     valuesRange: IntRange,
     yOffset: Float,
     coordinates: MutableList<PointF>
@@ -138,7 +138,7 @@ private fun DrawScope.calculateCoordinates(
         PointPosition.END -> size.width
     }
     val yValue = convertRange(
-        number = value.roundToInt(),
+        number = value,
         original = valuesRange,
         target = yOffset.roundToInt()..size.height.roundToInt(),
         height = size.height.roundToInt()

@@ -1,16 +1,13 @@
 package com.weatherapp.feature_home.domain.model
 
-import com.weatherapp.core_base.model.TempUnit
 import com.weatherapp.core_base.utils.toLocalDateTime
 import com.weatherapp.core_network.model.HourWeatherDto
-import com.weatherapp.feature_settings_api.AppSettings
 import org.threeten.bp.LocalDateTime
 import kotlin.math.roundToInt
 
 data class HourlyWeather(
     val dateTime: LocalDateTime,
     val tempC: Int,
-    val tempF: Int,
     val conditionText: String,
     val conditionIcon: String,
     val conditionIconCode: Int,
@@ -34,13 +31,9 @@ fun HourlyWeather.isSnow(): Boolean = willItShow != 0
 
 fun HourlyWeather.isHavePrecipitation(): Boolean = isRain() || isSnow()
 
-fun HourlyWeather.temp(settings: AppSettings) =
-    if (settings.tempUnit == TempUnit.C) tempC.toFloat() else tempF.toFloat()
-
 internal fun HourWeatherDto.asDomain(timeZoneId: String) = HourlyWeather(
     dateTime = timeEpoch.toLocalDateTime(zoneId = timeZoneId),
     tempC = tempC.roundToInt(),
-    tempF = tempF.roundToInt(),
     conditionText = condition.text,
     conditionIcon = condition.icon,
     conditionIconCode = condition.code,

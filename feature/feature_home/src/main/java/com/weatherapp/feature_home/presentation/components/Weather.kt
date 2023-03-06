@@ -1,5 +1,6 @@
 package com.weatherapp.feature_home.presentation.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.weatherapp.feature_home.presentation.model.AlertUiModel
 import com.weatherapp.feature_home.presentation.model.DailyWeatherUiModel
 import com.weatherapp.feature_home.presentation.model.HourlyWeatherItem
-import kotlin.math.roundToInt
 
 @Composable
 fun TempDiapason(
@@ -120,7 +120,7 @@ fun DailyItem(daily: DailyWeatherUiModel) {
 }
 
 @Composable
-fun HourlyItem(min: Float, max: Float, item: HourlyWeatherItem) {
+fun HourlyItem(min: Int, max: Int, item: HourlyWeatherItem) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = item.time,
@@ -146,7 +146,7 @@ fun HourlyItem(min: Float, max: Float, item: HourlyWeatherItem) {
                 .padding(top = 4.dp)
                 .height(70.dp)
                 .width(45.dp),
-            valuesRange = min.roundToInt()..max.roundToInt(),
+            valuesRange = min..max,
             startValue = item.startTemp,
             value = item.temp,
             endValue = item.endTemp,
@@ -156,6 +156,36 @@ fun HourlyItem(min: Float, max: Float, item: HourlyWeatherItem) {
         HumidityText(
             modifier = Modifier.padding(top = 4.dp),
             value = item.humidity
+        )
+    }
+}
+
+
+@Composable
+fun AdditionalWeatherItem(
+    modifier: Modifier = Modifier,
+    @DrawableRes
+    icon: Int,
+    name: String,
+    value: String
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            modifier = Modifier.size(50.dp),
+            painter = painterResource(id = icon),
+            contentDescription = null
+        )
+        Text(
+            modifier = Modifier.padding(top = 8.dp),
+            style = MaterialTheme.typography.subtitle1.copy(fontWeight = FontWeight.W500),
+            text = name
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.subtitle1.copy(color = MaterialTheme.colors.secondaryVariant)
         )
     }
 }

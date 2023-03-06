@@ -3,18 +3,13 @@ package com.weatherapp.core_design_system.util
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import com.weatherapp.core_design_system.R
-import kotlin.math.roundToInt
 
-fun mapTempToColor(tempC: Float): Color {
-    val tempInt = tempC.roundToInt()
-
-    return if (tempInt > 30) {
-        tempMap[30] ?: Color.White
-    } else if (tempInt < -30) {
-        tempMap[-30] ?: Color.White
-    } else {
-        tempMap[tempInt] ?: Color.White
-    }
+fun mapTempToColor(tempC: Int): Color = if (tempC > 30) {
+    tempMap[30] ?: Color.White
+} else if (tempC < -30) {
+    tempMap[-30] ?: Color.White
+} else {
+    tempMap[tempC] ?: Color.White
 }
 
 @DrawableRes

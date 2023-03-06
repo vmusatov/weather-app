@@ -9,12 +9,10 @@ import com.weatherapp.core_design_system.util.mapIconCode
 import com.weatherapp.core_design_system.util.mapTempToColor
 import com.weatherapp.feature_home.R
 import com.weatherapp.feature_home.domain.model.*
+import com.weatherapp.feature_home.formatters.*
 import com.weatherapp.feature_home.presentation.model.*
 import com.weatherapp.feature_settings_api.AppSettings
 import org.threeten.bp.LocalDateTime
-import kotlin.math.min
-import kotlin.math.roundToInt
-import com.weatherapp.core_design_system.R as CoreR
 
 class UiModelMapper(private val context: Context) {
 
@@ -22,14 +20,14 @@ class UiModelMapper(private val context: Context) {
         current: CurrentWeather,
         settings: AppSettings
     ): CurrentWeatherUiModel {
-        val temp = current.temp(settings).roundToInt()
-        val feelsLikeTemp = current.feelsLikeTemp(settings).roundToInt()
-
         return CurrentWeatherUiModel(
-            temp = context.getString(CoreR.string.degree, temp),
-            feelsLikeTemp = context.getString(CoreR.string.feels_like, feelsLikeTemp),
+            temp = formatTempString(context, current.tempC, settings.tempUnit),
+            feelsLikeTemp = formatFeelsLikeTempString(context, current.feelsLikeTempC, settings.tempUnit),
             conditionIcon = mapIconCode(current.conditionIconCode, current.isDayIcon),
-            conditionText = current.conditionText
+            conditionText = current.conditionText,
+            wind = formatSpeedString(context, current.windKph, settings.speedUnit),
+            pressure = formatPressureString(context, current.pressureMb, settings.pressureUnit),
+            uvIndex = formatUvIndex(context, current.uvIndex)
         )
     }
 
@@ -39,8 +37,7 @@ class UiModelMapper(private val context: Context) {
         settings: AppSettings
     ): List<DailyWeatherUiModel> {
         return daily.map { item ->
-            val maxTemp = item.maxTemp(settings).roundToInt()
-            val minTemp = item.minTemp(settings).roundToInt()
+
             val dayText = if (item.date.toLocalDate().isEqual(localDateTime.toLocalDate())) {
                 context.getString(R.string.today)
             } else {
@@ -52,12 +49,12 @@ class UiModelMapper(private val context: Context) {
                 dayText = dayText,
                 dayShortText = "",
                 humidity = item.humidity,
-                maxTemp = maxTemp,
-                maxTempColor = mapTempToColor(item.maxTempC.toFloat()),
-                maxTempText = context.getString(CoreR.string.degree, maxTemp),
-                minTemp = minTemp,
-                minTempColor = mapTempToColor(item.minTempC.toFloat()),
-                minTempText = context.getString(CoreR.string.degree, minTemp),
+                maxTemp = formatTemp(item.maxTempC, settings.tempUnit),
+                maxTempColor = mapTempToColor(item.maxTempC),
+                maxTempText = formatTempString(context, item.maxTempC, settings.tempUnit),
+                minTemp = formatTemp(item.minTempC, settings.tempUnit),
+                minTempColor = mapTempToColor(item.minTempC),
+                minTempText = formatTempString(context, item.minTempC, settings.tempUnit),
                 conditionIcon = mapIconCode(getCommonDayCondition(item.hours), true),
                 hours = mapHourlyForecast(item.hours, settings)
             )
@@ -71,7 +68,7 @@ class UiModelMapper(private val context: Context) {
 
         for (hour in hours) {
             val hourIndex = hours.indexOf(hour)
-            if (hourIndex in 8..21) {
+            if (hourIndex !in 8..21) {
                 continue
             }
 
@@ -94,34 +91,41 @@ class UiModelMapper(private val context: Context) {
     ): HourlyWeatherUiModel {
 
         val items = hourly.mapIndexed { index, item ->
-            val curTemp = item.temp(settings)
-            val prev = hourly.getOrNull(index - 1)?.temp(settings)
-            val next = hourly.getOrNull(index + 1)?.temp(settings)
+            val curTemp = formatTemp(item.tempC, settings.tempUnit)
+
+            val prev = hourly.getOrNull(index - 1)
+                ?.let { formatTemp(it.tempC, settings.tempUnit) }
+
+            val next = hourly.getOrNull(index + 1)
+                ?.let { formatTemp(it.tempC, settings.tempUnit) }
 
             HourlyWeatherItem(
                 time = item.dateTime.format(HOUR_AND_MINUTE_FORMAT),
                 temp = curTemp,
                 startTemp = getStartTemp(curTemp, prev),
                 endTemp = getEndTemp(curTemp, next),
-                tempText = context.getString(CoreR.string.degree, curTemp.roundToInt()),
+                tempText = formatTempString(context, item.tempC, settings.tempUnit),
                 conditionIcon = mapIconCode(item.conditionIconCode, item.isDayIcon),
                 humidity = "${item.humidity}%",
-                color = mapTempToColor(item.tempC.toFloat())
+                color = mapTempToColor(item.tempC)
             )
         }
 
+        val max = items.maxByOrNull { it.temp }?.temp
+        val min = items.minByOrNull { it.temp }?.temp
+
         return HourlyWeatherUiModel(
-            maxTemp = items.maxByOrNull { it.temp }?.temp ?: 0f,
-            minTemp = items.minByOrNull { it.temp }?.temp ?: 0f,
+            maxTemp = max?.let { formatTemp(it, settings.tempUnit) } ?: 0,
+            minTemp = min?.let { formatTemp(it, settings.tempUnit) } ?: 0,
             items = items,
         )
     }
 
-    private fun getStartTemp(curTemp: Float, prevTemp: Float?): Float? {
+    private fun getStartTemp(curTemp: Int, prevTemp: Int?): Int? {
         return if (prevTemp != null && prevTemp <= curTemp) curTemp else prevTemp
     }
 
-    private fun getEndTemp(curTemp: Float, nextTemp: Float?): Float? {
+    private fun getEndTemp(curTemp: Int, nextTemp: Int?): Int {
         return if (nextTemp != null && nextTemp > curTemp) nextTemp else curTemp
     }
 

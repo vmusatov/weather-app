@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="additional">Дополнительно</string>
+
+    <string name="degree">%1$d°</string>
     <string name="feels_like">Ощущается как %1$d°</string>
+
+    <string name="kmh">%1$d км/ч</string>
+    <string name="ms">%1$d м/с</string>
+    <string name="mbar">%1$d мбар</string>
+    <string name="mmhg">%1$d мм рт. ст.</string>
+
+    <string name="wind">Ветер</string>
+    <string name="pressure">Давление</string>
+    <string name="uv_index">УФ-индекс</string>
+
+    <string name="low">Низкий</string>
+    <string name="moderate">Умеренный</string>
+    <string name="high">Высокий</string>
+    <string name="very_high">Очень высокий</string>
+    <string name="extreme">Экстремальный</string>
+    <string name="undefined">Неопределено</string>
 </resources>

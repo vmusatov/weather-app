@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="additional">Additional</string>
+
     <string name="degree">%1$d°</string>
     <string name="feels_like">Feels like %1$d°</string>
 
     <string name="kmh">%1$d km/h</string>
+    <string name="ms">%1$d m/s</string>
     <string name="mbar">%1$d mbar</string>
+    <string name="mmhg">%1$d mm Hg</string>
+
+    <string name="wind">Wind</string>
+    <string name="pressure">Pressure</string>
+    <string name="uv_index">UV-index</string>
+
+    <string name="low">Low</string>
+    <string name="moderate">Moderate</string>
+    <string name="high">High</string>
+    <string name="very_high">Very High</string>
+    <string name="extreme">Extreme</string>
+    <string name="undefined">Undefined</string>
 </resources>

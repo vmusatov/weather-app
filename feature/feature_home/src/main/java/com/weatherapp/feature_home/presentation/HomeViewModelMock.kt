@@ -4,7 +4,6 @@ import com.weatherapp.core_design_system.R
 import com.weatherapp.core_design_system.util.mapTempToColor
 import com.weatherapp.feature_home.presentation.model.*
 import org.threeten.bp.LocalDateTime
-import kotlin.math.roundToInt
 import kotlin.random.Random
 
 class HomeViewModelMock(
@@ -65,8 +64,8 @@ class HomeViewModelMock(
                 minTemp = minTemp,
                 maxTempText = "$maxTemp°",
                 minTempText = "$minTemp°",
-                maxTempColor = mapTempToColor(maxTemp.toFloat()),
-                minTempColor = mapTempToColor(minTemp.toFloat()),
+                maxTempColor = mapTempToColor(maxTemp),
+                minTempColor = mapTempToColor(minTemp),
                 conditionIcon = R.drawable.ic_1000_day,
                 hours = getHourlyList()
             )
@@ -78,13 +77,13 @@ class HomeViewModelMock(
             val list: MutableList<HourlyWeatherItem> = mutableListOf()
 
             for (i in 0..10) {
-                val temp = random.nextInt(5, 15).toFloat()
+                val temp = random.nextInt(5, 15)
                 list.add(
                     HourlyWeatherItem.empty().copy(
                         temp = temp,
                         startTemp = if (i == 0) null else list[i - 1].temp,
                         endTemp = if (i == 10) null else temp,
-                        tempText = "${temp.roundToInt()}°",
+                        tempText = "${temp}°",
                         color = mapTempToColor(temp)
                     )
                 )
